@@ -4,6 +4,7 @@ dotenv.config();
 
 import express from "express";
 import cors from "cors";
+import UserRoute from "./src/auth/user.route.js";
 
 const app = express();
 const PORT =  process.env.PORT || 8081;
@@ -17,6 +18,9 @@ app.use(express.json());
 app.get('/hello', (req, res) => {
     res.status(200).json({message:"Hello from Server", port: PORT});
 });
+
+//routes
+app.use("/user", UserRoute)
 
 // Start server
 app.listen(PORT, () => {
