@@ -1,3 +1,4 @@
+import UserModel from "../auth/user.model.js";
 import TicketModel from "./ticket.model.js";
 
 export const createTicket = async (req, res) => {
@@ -10,20 +11,30 @@ export const createTicket = async (req, res) => {
       additionalInfo,
       productLocation,
       contact,
-      
+      organisationName,
+      communicationAddress,
+      state,
+      deviceContact, // Changed from deviceContacts to deviceContact
     } = req.body;
 
     let parsedContact = {};
+    let parsedDeviceContact = {};
+
     try {
-      parsedContact = JSON.parse(contact); // expect a JSON string from form-data
+      parsedContact = JSON.parse(contact);
     } catch (err) {
       return res.status(400).json({ message: "Invalid contact format" });
     }
 
-    const filePaths =
-      req.files?.map((file) => file.path.replace("public/", "")) || [];
+    try {
+      parsedDeviceContact = JSON.parse(deviceContact); // Changed to parse single object
+    } catch (err) {
+      return res.status(400).json({ message: "Invalid deviceContact format" });
+    }
 
-    // Generate custom ticket ID
+    const filePaths = req.files?.map((file) => file.path.replace("public/", "")) || [];
+
+    // Generate ticket ID
     const currentYear = new Date().getFullYear();
     const count = await TicketModel.countDocuments({
       createdAt: {
@@ -32,7 +43,7 @@ export const createTicket = async (req, res) => {
       },
     });
 
-    const paddedNumber = String(count + 1).padStart(3, "0"); // e.g., 001
+    const paddedNumber = String(count + 1).padStart(3, "0");
     const ticketId = `TCK-${currentYear}-${paddedNumber}`;
 
     const newTicket = await TicketModel.create({
@@ -44,6 +55,10 @@ export const createTicket = async (req, res) => {
       additionalInfo,
       productLocation,
       contact: parsedContact,
+      organisationName,
+      communicationAddress,
+      state,
+      deviceContact: parsedDeviceContact, // Changed from deviceContacts to deviceContact
       filePaths,
       createdBy: req.user.id,
     });
@@ -51,9 +66,10 @@ export const createTicket = async (req, res) => {
     res.status(201).json({ message: "Ticket created", ticket: newTicket });
   } catch (err) {
     console.error("Ticket creation failed:", err);
-    res.status(500).json({ message: err || "Server error" });
+    res.status(500).json({ message: err.message || "Server error" });
   }
 };
+
 
 export const getTickets = async (req, res) => {
   try {
@@ -77,6 +93,48 @@ export const getTickets = async (req, res) => {
     res.status(500).json({ message: err.message || "Server error" });
   }
 };
+
+
+export const dashBoardData = async (req, res)=>{
+  try {
+    
+    const tickets = await TicketModel.find().sort({ createdAt: -1 });
+    const users = await UserModel.find();
+    
+    
+    const totalTickets = tickets.length;
+    const totalOpen = tickets.filter(ticket=>ticket.status === 'open').length;
+    const totalClosed = tickets.filter(ticket=>ticket.status === 'closed').length;
+    const totalInprogress = tickets.filter(ticket=>ticket.status === 'in_progress').length;
+    const totalCriticalTickets = tickets.filter(ticket=>ticket.priority === '3').length;
+    const totalMediumTickets = tickets.filter(ticket=>ticket.priority === '2').length;
+    const totalLowTickets = tickets.filter(ticket=>ticket.priority === '1').length;
+    const totalAdmins = users.filter(user=>user.role === 'admin').length;
+    const totalSuperAdmins = users.filter(user=>user.role === 'superadmin').length;
+    const totalUsers = users.filter(user=>user.role === 'user').length;
+
+    const recentTickets = tickets.slice(0, 5);
+
+    const payload = {
+      totalTickets,
+      totalOpen,
+      totalClosed,
+      totalInprogress,
+      totalCriticalTickets,
+      totalMediumTickets,
+      totalLowTickets,
+      recentTickets,
+      totalAdmins,
+      totalSuperAdmins,
+      totalUsers
+    }
+
+    res.json(payload);
+
+  } catch (err) {
+    res.status(500).json({ message: err.message || "Server error" });
+  }
+}
 
 export const getTicketById = async (req, res)=>{
   try {

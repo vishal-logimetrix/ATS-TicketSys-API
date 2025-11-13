@@ -1,6 +1,6 @@
 import express from "express";
 import upload from "../middleware/upload.middleware.js";
-import { createTicket, getTicketById, getTickets, updateTicketById } from "./ticket.controller.js";
+import { createTicket, dashBoardData, getTicketById, getTickets, updateTicketById } from "./ticket.controller.js";
 import { isAdminOrSuperAdmin, verifyToken } from "../middleware/auth.middleware.js";
 
 const TicketRouter = express.Router();
@@ -10,6 +10,7 @@ TicketRouter.post("/create",verifyToken, isAdminOrSuperAdmin, upload.array("file
 TicketRouter.get("/list",verifyToken, getTickets);
 TicketRouter.get("/list/:id",verifyToken, getTicketById);
 TicketRouter.put ("/:id", verifyToken, isAdminOrSuperAdmin, updateTicketById);
+TicketRouter.get ("/dashboard", verifyToken, dashBoardData);
 export default TicketRouter;
 
 

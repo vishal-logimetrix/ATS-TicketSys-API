@@ -52,8 +52,20 @@ export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+
+    // If password is being updated
+    if (data.password) {
+      // Store plain password
+      data.plainPassword = data.password;
+      
+      // Hash the new password
+      const encryptedPass = await bcrypt.hash(data.password, 12);
+      data.password = encryptedPass;
+    }
+
     const updatedUser = await UserModel.findByIdAndUpdate(id, data, { new: true });
-    res.json(updatedUser); // ✅ correct reference
+    
+    res.json(updatedUser);
   } catch (err) {
     res.status(500).json({ message: err.message || "server error" });
   }

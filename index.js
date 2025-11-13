@@ -8,12 +8,13 @@ import UserRoute from "./src/auth/user.route.js";
 
 import mongoose from "mongoose";
 import TicketRouter from "./src/ticket/ticket.route.js";
+import DeviceRouter from "./src/devices/device.route.js";
 mongoose.connect(process.env.DB_URL)
 .then(()=>console.log('connected'))
 .catch(()=>console.log('error'));
 
 const app = express();
-const PORT =  process.env.PORT || 8081;
+const PORT =  process.env.PORT || 8080;
 
 app.use(cors());
 app.use(express.urlencoded({ extended: false }));
@@ -28,7 +29,8 @@ app.get('/hello', (req, res) => {
 
 //routes
 app.use("/user", UserRoute);
-app.use("/ticket", TicketRouter)
+app.use("/ticket", TicketRouter);
+app.use('/device', DeviceRouter);
 
 // Start server
 app.listen(PORT, () => {
